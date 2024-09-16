@@ -169,7 +169,15 @@ function CustomerCreate() {
                 label="วัน/เดือน/ปี ที่เข้าที่พัก"
                 name="CheckIn"
               >
-                <DatePicker style={{ width: "100%" }} />
+                <DatePicker 
+
+                style={{ width: "100%" }}
+
+                //กำหนดให้ไม่ให้จองย้อนหลังวันปัจจุบันได้
+                disabledDate = {(current) => {
+                  return current && current < moment().startOf("day");
+                }}
+                 />
               </Form.Item>
             </Col>
 
@@ -177,7 +185,11 @@ function CustomerCreate() {
               <Form.Item 
                 label="วัน/เดือน/ปี ที่ออก"
                 name="CheckOut">
-                <DatePicker style={{ width: "100%" }} />
+                <DatePicker 
+                style={{ width: "100%" }}
+                disabledDate = {(current) => {
+                  return current && current < moment().startOf("day");
+                }} />
               </Form.Item>
             </Col>
 
