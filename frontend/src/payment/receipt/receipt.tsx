@@ -1,42 +1,125 @@
-import React, { useState } from 'react';
-import qrCode from '../assets/qr-code.png'; // รูป QR Code สำหรับการชำระเงิน
-// import './Payment.css'; 
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { PaymentInterface } from '../interface/IPayment';
+import { GetPaymentById } from '../services/https/PaymentAPI';
+import { OrderInterface } from '../../food_service/interfaces/IOrder';
+import { GetBookingsById, GetRoomsById } from '../../room/booking/services/https';
+import { GetOrders } from '../../food_service/services/https/OrderAPI';
+import { BookingInterface } from '../../room/booking/interfaces/IBooking';
+import './App.css';
+import { RoomInterface } from '../../room/booking/interfaces/IRoom';
 
-const Receipt: React.FC = () => {
-  const [showReceipt, setShowReceipt] = useState(false); // สถานะการแสดงสลิปชำระเงิน
+const Receipt = () => {
+  const [payment, setPayment] = useState<PaymentInterface | null>(null);
+  const [booking, setBooking] = useState<BookingInterface | null>(null); // Change to single object
+  const [room, setRoom] = useState<RoomInterface | null>(null);
+  const [order, setOrder] = useState<OrderInterface[]>([]);
 
-  // ฟังก์ชั่นสำหรับการแสดงสลิปชำระเงิน
-  const handlePayment = () => {
-    // จำลองการชำระเงิน
-    setShowReceipt(true); // เมื่อชำระเงินเสร็จจะให้แสดงสลิป
+  const location = useLocation();
+  const { paymentID, bookingID, roomID } = location.state || {};
+
+  useEffect(() => {
+    console.log("Received paymentID:", paymentID);
+    console.log("Received bookingID:", bookingID);
+    console.log("Received roomID:", roomID);
+
+    if (paymentID) {
+      fetchPayment(paymentID);
+      fetchBooking(bookingID);
+      fetchRoom(roomID);
+      fetchOrder();
+    }
+  }, [paymentID]);
+
+  const fetchPayment = async (id: number) => {
+    try {
+      const response = await GetPaymentById(id);
+      console.log("API GetPaymentById for Receipt: ", response.BookingID);
+      
+      
+      if (response?.BookingID) {
+        setPayment(response);
+      }
+    } catch (error) {
+      console.error("Error fetching payment data:", error);
+    }
   };
 
-  // ฟังก์ชั่นสำหรับปิดหน้าสลิปชำระเงิน
-  const handleCloseReceipt = () => {
-    setShowReceipt(false);
+  const fetchBooking = async (bookingID: number) => {
+    try {
+      const response = await GetBookingsById(bookingID);
+      console.log("GetBookingsById: ", response);
+      
+
+      if (response?.ID) {
+        setBooking(response);
+      }
+    } catch (error) {
+      console.error("Error fetching booking data:", error);
+    }
+  };
+
+  const fetchRoom = async (roomID: number) => {
+    try {
+      const response = await GetRoomsById(roomID);
+      console.log("GetRoomsById: ", response);
+      
+
+      if (response?.ID) {
+        setRoom(response);
+      }
+    } catch (error) {
+      console.error("Error fetching booking data:", error);
+    }
+  };
+
+  const fetchOrder = async () => {
+    try {
+      // Assuming you need to filter orders by booking ID; update this if necessary
+      const response = await GetOrders();
+      const filteredOrders = response.filter((order: { BookingID: number; }) => order.BookingID === bookingID);
+      console.log("filteredOrders: ", filteredOrders);
+      setOrder(filteredOrders);
+    } catch (error) {
+      console.error("Error fetching order data:", error);
+    }
   };
 
   return (
-    <div className="payment-container">
-      <h1>ชำระเงิน</h1>
+    <div className="receipt">
+      <header className="receipt-header">
+        <h1>Receipt</h1>
+      </header>
 
-      {!showReceipt ? (
-        <div className="qr-section">
-          <p>กรุณาสแกน QR Code เพื่อชำระเงิน</p>
-          <img src={qrCode} alt="QR Code" className="qr-code" />
-          <button onClick={handlePayment} className="pay-button">ชำระเงิน</button>
-        </div>
-      ) : (
-        <div className="receipt-section">
-          <h2>สลิปการชำระเงิน</h2>
-          <div className="receipt-details">
-            <p>รหัสการชำระเงิน: 123456</p>
-            <p>จำนวนเงินที่ชำระ: 1,500 บาท</p>
-            <p>วันที่: 12 กันยายน 2024</p>
-          </div>
-          <button onClick={handleCloseReceipt} className="close-button">ปิด</button>
+      {booking && (
+        <div className="receipt-room">
+          <span>{booking.Customer?.Name}</span>
+          <span>{booking.Room?.Address}</span>
+          <span>${booking.RoomID == room?.ID ? room?.RoomTypes?.PricePerNight : null}</span>
         </div>
       )}
+
+      <div className="receipt-divider"></div>
+
+      {order.map((order) => (
+        <div key={order.ID} className="receipt-order">
+          <span>{order.Menu?.MenuList}</span>
+          <span>x{order.Amount}</span>
+          <span>${order.Price.toFixed(2)}</span>
+        </div>
+      ))}
+
+      <div className="receipt-total">
+        {payment && (
+          <h3>Total Payment: ${payment.TotalAmount.toFixed(2)}</h3>
+        )}
+      </div>
+
+      <img
+        src="https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg"
+        alt="QR Code"
+        className="qr-code"
+      />
     </div>
   );
 };

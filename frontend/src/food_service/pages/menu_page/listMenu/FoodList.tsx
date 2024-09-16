@@ -98,7 +98,7 @@ function FoodList({ selectedCategory, bookingID }: { selectedCategory: string | 
           BookingID: bookingID,
           MenuID: item.ID,
           Amount: item.amount,
-          Price: parseFloat(item.Price.toFixed(2)),
+          Price: item.Price * item.amount,
           OrderDate: new Date(),
         };
          
@@ -151,10 +151,8 @@ function FoodList({ selectedCategory, bookingID }: { selectedCategory: string | 
   
   const foodItems = filteredMenuItems.filter(item => item.FoodCategoryID === 1);
   const drinkItems = filteredMenuItems.filter(item => item.FoodCategoryID === 2);
-  
-  console.log("Menu Items:", menuItems);
+
   console.log("Selected Category:", selectedCategory);
-  
 
   return (
     <div className='menu-page'>
