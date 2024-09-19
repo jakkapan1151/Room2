@@ -1,15 +1,14 @@
 package entity
 
 import (
-	"time"
-
 	"gorm.io/gorm"
+	"time"
 )
 
 type Booking struct {
 	gorm.Model
-	CheckIn    time.Time
-	CheckOut   time.Time
+	CheckIn  time.Time
+	CheckOut time.Time
 	TotalPrice float32 `gorm:"default:0.01"`
 
 	// CreatorID ทำหน้าที่เป็น FK
